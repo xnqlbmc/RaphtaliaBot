@@ -61,4 +61,4 @@ npm start
 ```
 
 ## ☎️ SUPORTE:
-Você pode me contatar pelo [WhatsApp](https://wa.me/553898305259), ou pelo [Telegram](https://t.me/6693150597). 
+Você pode me contatar pelo [WhatsApp](https://wa.me/553898305259), ou pelo [Telegram](https://t.me/xnqlbmc). 
