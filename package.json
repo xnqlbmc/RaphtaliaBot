@@ -18,6 +18,7 @@
     "chalk": "^5.6.2",
     "fs": "^0.0.1-security",
     "groq-sdk": "^1.1.2",
+    "yt-search": "^2.13.1",
     "jszip": "^3.10.1",
     "node-fetch": "^3.3.2",
     "pino": "^8.x.x",
