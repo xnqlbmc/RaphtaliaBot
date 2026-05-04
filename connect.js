@@ -74,6 +74,7 @@ async function connectToWhatsApp () {
         auth: state,
         logger: logger,
         printQRInTerminal: false,
+		browser: ['macOS', 'Safari', '17']
     });
 
     // 2. Gerenciamento de Credenciais
@@ -84,12 +85,13 @@ async function connectToWhatsApp () {
         const { connection, lastDisconnect, qr } = update;
             
     //  4. Cria o código de conexão se o 2 for escolhido
-    if (useCodePairing && phoneNumber) {
+    if (useCodePairing && phoneNumber && !pairingCodeRequested) {
+    pairingCodeRequested = true;
         setTimeout(async () => {
             try {
                 console.log('Gerando código de pareamento...');
                 const code = await sock.requestPairingCode(phoneNumber);
-                console.log(`\n🎉 SEU CÓDIGO DE ACESSO DE 8 DÍGITOS: ${code}`);
+                console.log(`\n🎉 SEU CÓDIGO: ${code}`);
                 console.log('No celular: WhatsApp > Dispositivos Conectados > Conectar com número de telefone');
             } catch (err) {
                 console.error('❌ Falha ao gerar pairing code:', err);
