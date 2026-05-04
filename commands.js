@@ -1,6 +1,5 @@
 // by xnqlb
 import { downloadMediaMessage, generateWAMessageFromContent, prepareWAMessageMedia } from '@whiskeysockets/baileys';
-import sharp from 'sharp';
 import { createWriteStream, unlinkSync, readFileSync, existsSync, writeFileSync, mkdirSync, rmSync } from 'fs';
 import { exec as execCallback, execFile } from 'child_process';
 import { promisify } from 'util'; 
