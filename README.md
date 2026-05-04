@@ -23,6 +23,10 @@ winget install nodejs ffmpeg Git.Git yt-dlp
 ```
 git clone https://github.com/xnqlbmc/RaphtaliaBot
 ```
+**Baixar dependências:**
+```
+cd RaphtaliaBot && npm install
+```
 **Iniciar o bot:**
 ```
 cd RaphtaliaBot && npm start
@@ -49,6 +53,10 @@ termux-setup-storage
 **Criar a pasta do bot:**
 ```
 cd /sdcard/Download && git clone https://github.com/xnqlbmc/RaphtaliaBot
+```
+**Baixar dependências:**
+```
+cd /sdcard/Download/RaphtaliaBot && npm install
 ```
 **Iniciar o bot:**
 ```
