@@ -1,5 +1,5 @@
 // by xnqlb
-import { makeWASocket, useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
+import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import processMessages from './commands.js';
 import pino from 'pino';
@@ -68,9 +68,14 @@ async function connectToWhatsApp () {
         }
     }
     // --------------------------------------------------------------------------
+const { version, isLatest } = await fetchLatestBaileysVersion();
+
+console.log(`📱 Versão do WhatsApp: ${version.join('.')}`);
+console.log(`✅ Atualizado: ${isLatest}`);
 
 // 1. Cria a Conexão
     const sock = makeWASocket({
+		version,
         auth: state,
         logger: logger,
         printQRInTerminal: false,
