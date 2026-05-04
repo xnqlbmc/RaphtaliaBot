@@ -11,12 +11,6 @@ import path from 'path';
 import chalk from 'chalk'; 
 import fetch from 'node-fetch';
 import JSZip from "jszip";
-import { fetchSticker, fetchStickerVideo, fetchJson } from './utils/sticker-brat.js';
-import { downloadInstagramReel, downloadYoutubeAudio } from './utils/mediaApi.js';
-import { GoogleGenAI } from '@google/genai';
-import { loadGroupSettings, getGroupConfig, setGroupConfig } from './utils/group_settings.js';
-import { loadUserMemory, getUserFacts, addUserFact } from './utils/user_memory.js';
-import { buildLottieSticker } from './utils/lottie/index.cjs';
 import Groq from "groq-sdk";
 
 import { fileURLToPath } from 'url';
@@ -25,19 +19,13 @@ const __dirname = path.dirname(__filename);
 
 const exec = promisify(execCallback);
 
-const API_URL_BASE = 'https://api.nexfuture.com.br'; 
-
 // Função principal que recebe o objeto de conexão (sock) e as mensagens (m)
 export default async function processMessages(sock, m) {
     const prefix = CONFIG.prefixo;
     const nomeBot = CONFIG.nome_bot;
     const nomeDono = CONFIG.nome_dono;
     const numeroDono = CONFIG.numero_dono;
-    const API_KEY_NEXFUTURE = CONFIG.API_KEY_NEXFUTURE;
-    const GEMINI_API_KEY = CONFIG.GEMINI_API_KEY; 
 	const GROQ_API_KEY = CONFIG.GROQ_API_KEY;
-
-    const ai = CONFIG.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: CONFIG.GEMINI_API_KEY }) : null;
     
     // 1. Validação e extração de dados da mensagem
     if (!m.messages || m.type !== 'notify') return;
@@ -59,7 +47,7 @@ export default async function processMessages(sock, m) {
 	
 	const from = chatId;
 	const msg = message;
-	const user = msg.key.participantAlt || msg.key.participant || msg.key.remoteJid
+	const user = msg.key.participant || msg.key.remoteJid
 	const isGroup = chatId.endsWith("@g.us");
 	const pushName = message.pushName;
 	const groupMetadata = isGroup
