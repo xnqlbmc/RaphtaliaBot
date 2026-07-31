@@ -1,5 +1,4 @@
 // by xnqlb
-// [Backup Sigma do Gemini] Ativo e seguro!
 import { downloadMediaMessage, generateWAMessageFromContent, prepareWAMessageMedia } from '@whiskeysockets/baileys';
 import fs, { createWriteStream, unlinkSync, readFileSync, existsSync, writeFileSync, mkdirSync, rmSync } from 'fs';
 import { exec as execCallback, execFile, execSync } from 'child_process';
