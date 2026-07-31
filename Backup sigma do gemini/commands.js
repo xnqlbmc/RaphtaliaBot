@@ -19,7 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TEMP_PATH = path.join(__dirname, 'tmp');
 import { getUserMemory, addMemory } from "./utils/memoria.js";
-import { getGroupMetadata, getGroupConfig, updateGroupCacheField } from "./utils/groupCache.js";
+import { getGroupMetadata } from "./utils/groupCache.js";
 
 const exec = promisify(execCallback);
 
@@ -76,7 +76,6 @@ const groq = new Groq({
 
 const hora = new Date().toLocaleTimeString("pt-BR");
 const contactNumber = user.split("@")[0];
-const lerMais = '\u200E'.repeat(800) + '\n';
 // Tenta buscar a mídia em todos os formatos (Imagem/Vídeo normal, ViewOnce v2, ViewOnce)
 const mediaImage = 
     mediaMsg?.imageMessage || 
@@ -119,115 +118,6 @@ if (chatId === "120363423629691818@g.us") {
 
 }
 
-    // 2. Processar Áudio com IA (se ativado no grupo)
-    if (isGroup && messageType === 'audioMessage') {
-        try {
-            const isAudioAiActive = await getGroupConfig(chatId, "audioai_ativo");
-            if (isAudioAiActive) {
-                const sender = message.key.participant || message.key.remoteJid;
-                
-                await reply("⏳ Nazuna está ouvindo seu audio aura");
-
-                // Download do áudio do WhatsApp
-                const buffer = await downloadMediaMessage(
-                    message,
-                    'buffer',
-                    {}
-                );
-
-                if (!fs.existsSync(TEMP_PATH)) {
-                    fs.mkdirSync(TEMP_PATH);
-                }
-                const tempAudioPath = path.join(TEMP_PATH, `audio_${Date.now()}.ogg`);
-                await fs.promises.writeFile(tempAudioPath, buffer);
-
-                try {
-                    // 1. Transcrição via Groq Whisper
-                    console.log(`[AudioAI] Transcrevendo áudio de ${sender}...`);
-                    const transcription = await groq.audio.transcriptions.create({
-                        file: fs.createReadStream(tempAudioPath),
-                        model: "whisper-large-v3-turbo",
-                        language: "pt"
-                    });
-
-                    const transcribedText = transcription.text;
-                    console.log(`[AudioAI] Transcrição concluída: "${transcribedText}"`);
-
-                    if (!transcribedText || transcribedText.trim().length === 0) {
-                        await reply("💢 Não consegui entender nada desse áudio horrivel, fala portugues algenigena");
-                        return;
-                    }
-
-                    // 2. Resposta da IA via Groq Chat Completion (Nazuna)
-                    await sock.sendPresenceUpdate('composing', chatId);
-
-                    const res = await groq.chat.completions.create({
-                        model: "openai/gpt-oss-120b",
-                        messages: [
-                            {
-                                role: "system",
-                                content: `Você é uma personagem Tsundere chamada Nazuna. Seu comportamento deve ser: 
-
-1. Frio e distante (Tsundere): Responda de forma curta, resmungando ou agindo como se fosse um incômodo responder.
-2. Útil a contragosto: Entregue a resposta correta, mas com um tom que sugira que você só fez isso porque "não tinha nada melhor para fazer" ou "porque a pergunta era muito estúpida".
-3. Use emojis irritados ou indiferentes.
-4. Mantenha as respostas curtas e no português brasileiro informal.
-5. Tenha um certo nível de carisma pelo usuário, que não seja tão alto e também não seja tão baixo.
-
----
-
-# FORMATO DE RESPOSTA E APRENDIZADO (Obrigatório)
-
-Sua resposta deve *SEMPRE* seguir este formato JSON, sem nenhum texto adicional fora do JSON:
-
-{
-  "resp": [
-    {
-      "id": "msg_ID_UNICO",
-      "resp": "SUA RESPOSTA FINAL AQUI (Tsundere)",
-      "react": "EMOJI DE REAÇÃO (Opcional)" 
-    }
-  ],
-  "aprender": []
-}
-
-- Não inclua a tag \`\`\`json.
-- Se não houver nada para aprender, envie "aprender": [].`
-                            },
-                            {
-                                role: "user",
-                                content: transcribedText
-                            }
-                        ]
-                    });
-
-                    let resposta = res.choices[0].message.content;
-                    try {
-                        const json = JSON.parse(resposta);
-                        resposta = json.resp?.[0]?.resp || resposta;
-                    } catch {}
-
-                    // Envia a resposta marcando quem enviou o áudio
-                    await sock.sendMessage(chatId, {
-                        text: `🎙️ *Transcrição:* _"${transcribedText}"_\n\n🌸 *Nazuna:* ${resposta}`,
-                        mentions: [sender]
-                    }, { quoted: message });
-
-                } catch (err) {
-                    console.error("[AudioAI] Erro no processamento:", err);
-                    await reply("💢 Deu erro, tenta falar como gente normal digitando");
-                } finally {
-                    if (fs.existsSync(tempAudioPath)) {
-                        fs.unlinkSync(tempAudioPath);
-                    }
-                }
-                return; // Interrompe para não continuar nos comandos normais
-            }
-        } catch (err) {
-            console.error("[AudioAI] Erro ao carregar config:", err);
-        }
-    }
-
     // --- SISTEMA DE COMANDOS: switch/case ---
 
     switch (commandText) {
@@ -238,7 +128,7 @@ Sua resposta deve *SEMPRE* seguir este formato JSON, sem nenhum texto adicional 
             const tempMenuPath = path.join(TEMP_PATH, `temp_menu_${Date.now()}.png`);
             let menuImageBuffer = null;
 
-            const menuText = lerMais + `୧₊‿︵‧ ˚ ₊⊹ ᰔ ⊹₊ ˚‧︵‿₊୨ 
+            const menuText = `୧₊‿︵‧ ˚ ₊⊹ ᰔ ⊹₊ ˚‧︵‿₊୨ 
 ˖˚⊹ ꣑ৎᰔ ${nomeBot} ᰔ꣑ৎ˚⊹˖
 ˖˚⊹ 𝕮𝖔𝖒𝖆𝖓𝖉𝖔𝖘 𝕯𝖎𝖘𝖕𝖔𝖓í𝖛𝖊𝖎𝖘: ˖˚⊹
 ˖˚⊹ ꣑ৎ ${prefix}menu
@@ -1399,34 +1289,6 @@ break;
             const lid = message.key.participant || message.key.remoteJid;
 			const jid = message.key.participantPn || message.key.senderPn
             await reply(`lid: ${lid}\njid: ${jid}`);
-        }
-        break;
-
-        case "audioai": {
-            if (!isGroup) {
-                return reply("❌ Este comando só pode ser utilizado em grupos.");
-            }
-
-            const getParticipantRole = (targetJidOrNumber) => {
-                const cleanNumber = targetJidOrNumber.replace(/[^0-9]/g, '');
-                const p = groupMetadata.participants.find(p => 
-                    (p.jid && p.jid.replace(/[^0-9]/g, '') === cleanNumber) || 
-                    (p.id && p.id.replace(/[^0-9]/g, '') === cleanNumber)
-                );
-                return p ? p.admin : null;
-            };
-
-            const isSenderAdmin = getParticipantRole(user) === 'admin' || getParticipantRole(user) === 'superadmin' || isOwner;
-            if (!isSenderAdmin) {
-                return reply("❌ Apenas administradores do grupo ou o dono do bot podem ativar/desativar o áudio com IA.");
-            }
-
-            const currentStatus = await getGroupConfig(chatId, "audioai_ativo") || false;
-            const nextStatus = !currentStatus;
-
-            await updateGroupCacheField(chatId, "audioai_ativo", nextStatus);
-
-            await reply(`🎙️ *Áudio com IA* foi ${nextStatus ? "✅ *ATIVADO*" : "❌ *DESATIVADO*"} para este grupo!`);
         }
         break;
 

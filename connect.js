@@ -62,7 +62,7 @@ async function connectToWhatsApp () {
         if (choice === '2') {
             useCodePairing = true;
             console.log('Você escolheu código de pareamento.');
-            phoneNumber = await rl.question('Digite o número do seu telefone (Ex: 5511987654321): ');
+            phoneNumber = await rl.question('Digite o número do seu telefone (Ex: 553898305259, que seria +55 38 9830-5259): ');
         } else {
             console.log('Você escolheu QR Code.');
         }
@@ -75,7 +75,7 @@ console.log(`✅ Atualizado: ${isLatest}`);
 
 // 1. Cria a Conexão
     const sock = makeWASocket({
-		version,
+		version: [2, 3000, 1044006379],
         auth: state,
         logger: logger,
         printQRInTerminal: false,
@@ -104,29 +104,44 @@ console.log(`✅ Atualizado: ${isLatest}`);
         }, 3000);
     }
 
-        if (connection === 'close') {
-            let reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
-            
-            if (reason === DisconnectReason.loggedOut) {
-                console.log('🚨 Desconectado. Sessão finalizada. Excluindo automaticamente a pasta de autenticação...');
-                
-                try {
-                    rmSync(AUTH_FILE_PATH, { recursive: true, force: true });
-                    console.log(`✅ Pasta "${AUTH_FILE_PATH}" excluída com sucesso!`);
-                } catch (err) {
-                    console.error('❌ Erro ao apagar a pasta de autenticação:', err.message);
-                }
-                
-                console.log('Por favor, reinicie o bot para gerar um novo QR Code/Código de Acesso.');
-                
-            } else {
-                console.log(`🔌 Conexão fechada. Motivo: ${reason}. Tentando reconectar...`);
-                connectToWhatsApp(); 
+    if (connection === 'close') {
+        // Captura o código de status do erro com segurança
+        const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
+        const errorName = lastDisconnect?.error?.name;
+        const errorMessage = lastDisconnect?.error?.message || '';
+
+        console.log(`⚠️ Conexão fechada. Motivo (Status): ${reason} | Erro: ${errorName}`);
+
+        // CASO 1: Logout do usuário (Aí sim o bot deve parar)
+        if (reason === DisconnectReason.loggedOut) {
+            console.log('🚨 Desconectado. Sessão finalizada pelo celular. Excluindo autenticação...');
+            try {
+                rmSync(AUTH_FILE_PATH, { recursive: true, force: true });
+                console.log(`✅ Pasta "${AUTH_FILE_PATH}" excluída!`);
+            } catch (err) {
+                console.error('❌ Erro ao apagar a pasta:', err.message);
             }
-        } else if (connection === 'open') {
-            console.log('✅ Conectado ao WhatsApp! Bot pronto para uso.');
-            rl.close(); 
+            console.log('Reinicie o bot para escanear um novo QR Code.');
+            rl.close(); // Fecha o terminal com segurança
+
+        // CASO 2: Rate Limit (Overlimit) ou Erros de Conexão Temporários (428, 500, etc.)
+        } else if (reason === 428 || reason === 500 || errorMessage.includes('rate-overlimit')) {
+            console.log(`⏳ [Anti-Crash] Erro instável detectado (${reason || 'Rate-Limit'}). Aguardando 5 segundos antes de reconectar...`);
+            
+            // Dá um tempo para o servidor do WhatsApp respirar e não virar um loop infinito de erros
+            setTimeout(() => {
+                connectToWhatsApp();
+            }, 5000);
+
+        // CASO 3: Outros motivos padrões do Baileys (Reiniciar conexão, Bad Session, etc.)
+        } else {
+            console.log(`🔌 Tentando reconectar automaticamente de forma padrão...`);
+            connectToWhatsApp();
         }
+
+    } else if (connection === 'open') {
+        console.log('✅ Conectado ao WhatsApp! Bot pronto para uso.');
+    }
 
         // 5. Cria o QR-Code se o 1 for escolhido
         if (qr && !useCodePairing) {
